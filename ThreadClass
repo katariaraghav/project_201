@@ -1,0 +1,56 @@
+package rkataria_CSCI201_Lab10;
+
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.io.PrintWriter;
+import java.net.Socket;
+ 
+import javax.swing.JFrame;
+ 
+ 
+public class ThreadClass extends JFrame implements Runnable{
+       
+        private static final long serialVersionUID = 1L;
+        private Socket s;
+        private ServerClass serverClassInstance;
+        private PrintWriter pw;
+       
+        public ThreadClass(Socket s, ServerClass serverClassInstance) {
+                this.s = s;
+                this.serverClassInstance = serverClassInstance;
+               
+                try{
+                        // Establish an output stream for the game.
+                        this.pw = new PrintWriter(s.getOutputStream());
+                }
+                catch (IOException ioe) {
+                }
+        }
+ 
+        public void attack(String damage) {
+                pw.println(damage);
+                pw.flush();
+        }
+       
+        public void sendReadyMessage() {
+                pw.println("Ready");
+                pw.flush();
+        }
+       
+        public void run() {
+                try{
+                        BufferedReader br = new BufferedReader(new InputStreamReader(s.getInputStream()));
+                        while (true) {
+                                String damage = br.readLine();
+ 
+                                serverClassInstance.dealDamage(damage, this);
+                        }
+                }
+                catch(IOException ioe) {
+                  
+                        serverClassInstance.removeThreadClass(this);
+                }
+        }
+}
+ 

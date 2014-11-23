@@ -1,0 +1,154 @@
+package rkataria_CSCI201_Lab10;
+
+import java.awt.FlowLayout;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.io.PrintWriter;
+import java.net.Socket;
+import java.util.Random;
+ 
+import javax.swing.BoxLayout;
+import javax.swing.JButton;
+import javax.swing.JFrame;
+import javax.swing.JLabel;
+import javax.swing.JOptionPane;
+import javax.swing.JPanel;
+import javax.swing.Timer;
+ 
+ 
+public class ClientClass extends JFrame implements Runnable{
+       
+        private static final long serialVersionUID = 1L;
+        private int hp = 10; private int enemyHP = 10;
+        private PrintWriter pw;
+        private BufferedReader br;
+        private JPanel mainPanel, secondaryPanel;
+        private JButton button1, button2;
+        private JLabel player1Health;
+        private JLabel player2Health;
+        public ClientClass(String hostname, int port) {
+                super("Player");
+                setSize(350, 150);
+                setLocation(500, 500);
+                setupGUI();
+                setVisible(true);
+                setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+                try {
+                        Socket s = new Socket(hostname, port);
+                        this.pw = new PrintWriter(s.getOutputStream());
+                        this.br = new BufferedReader(new InputStreamReader(s.getInputStream()));
+                        new Thread(this).start();
+                }
+                catch (IOException ioe) {
+                       
+                }
+        }
+ 
+      
+        public void run() {
+                try {
+                        while (true) {
+                                String line = br.readLine();
+                                if (line.equals("Ready")) {
+       
+                                        for (int i = 3; i >= 0 ; i--) {
+                                                player2Health.setText(""+i);
+                                                new Thread(this).sleep(1000);
+                                        }
+                                        button1.setEnabled(true);
+                                        button2.setEnabled(true);
+                                        player2Health.setText(enemyHP + "/10 Health");
+                                }
+                                else{
+                                        int incomingDamage = Integer.parseInt(line);
+                                        hp -= incomingDamage;
+                                        if (hp <= 0) {
+                                                JOptionPane.showMessageDialog(null, "You Lost", "You lost. Game Over", JOptionPane.INFORMATION_MESSAGE);
+                                                setVisible(false);
+                                                dispose();
+                                        }
+                                        player1Health.setText(hp + "/10 Health");
+                                }
+                        }
+                }
+                catch (IOException | InterruptedException ioe) {
+                }
+               
+        }
+       
+        private void setupGUI() {
+                mainPanel = new JPanel(new FlowLayout());
+                secondaryPanel = new JPanel();
+                secondaryPanel.setLayout(new BoxLayout(secondaryPanel, BoxLayout.Y_AXIS));
+                button1 = new JButton("Sword");
+                button2 = new JButton("Magic");
+                player1Health = new JLabel(hp + "/10 Health");
+                player2Health = new JLabel("Waiting for other player...");
+                button1.setEnabled(false); button2.setEnabled(false);
+                button1.addActionListener(new ActionListener() {
+                        public void actionPerformed(ActionEvent e) {
+                                String attack = "" + 2;
+                                pw.println(attack);
+                                pw.flush();
+                                enemyHP -= 2;
+                                if (enemyHP <= 0) {
+                                        JOptionPane.showMessageDialog(null, "You Won", "You Won. Congratulations!", JOptionPane.INFORMATION_MESSAGE);
+                                        setVisible(false);
+                                        dispose();
+                                }
+                                player2Health.setText(enemyHP + "/10 Health");
+                                button1.setEnabled(false);
+                                button2.setEnabled(false);
+                                new Timer(3000, new ActionListener() {
+                                        public void actionPerformed(ActionEvent ae) {
+                                                button1.setEnabled(true);
+                                                button2.setEnabled(true);
+                                        }
+                                }).start();
+                        }
+                });
+               
+                button2.addActionListener(new ActionListener() {
+                        public void actionPerformed(ActionEvent e) {
+                                Random rand = new Random();
+                                int damage = rand.nextInt((5 - 1) + 1) + 1;
+                                String attack = "" + damage;
+                                pw.println(attack);
+                                pw.flush();
+                                enemyHP -= damage;
+                                if (enemyHP <= 0) {
+                                        JOptionPane.showMessageDialog(null, "You Won", "You Won. Congatulations!", JOptionPane.INFORMATION_MESSAGE);
+                                        setVisible(false);
+                                        dispose();
+                                }
+                                player2Health.setText(enemyHP + "/10 Health");
+                                button1.setEnabled(false);
+                                button2.setEnabled(false);
+                                new Timer(3000, new ActionListener() {
+                                        public void actionPerformed(ActionEvent ae) {
+                                                button1.setEnabled(true);
+                                                button2.setEnabled(true);
+                                        }
+                                }).start();
+                        }
+                       
+                });
+               
+                secondaryPanel.add(player1Health);
+                secondaryPanel.add(player2Health);
+                secondaryPanel.add(button1);
+                secondaryPanel.add(button2);
+               
+                mainPanel.add(secondaryPanel);
+                this.add(mainPanel);
+        }
+ 
+        public static void main(String [] args) {
+                
+                new ClientClass("127.0.0.1", 2500);
+        }
+}
+ 

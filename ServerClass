@@ -1,0 +1,68 @@
+package rkataria_CSCI201_Lab10;
+
+import java.io.IOException;
+import java.net.ServerSocket;
+import java.net.Socket;
+import java.util.Vector;
+ 
+ 
+ 
+public class ServerClass{
+        private Vector<ThreadClass> players = new Vector<ThreadClass>();
+        public ServerClass(int port) {
+             
+                try{
+                        ServerSocket ss = new ServerSocket(port);
+                        while (true) {
+                               
+                           
+                              
+                                Socket s = ss.accept();
+                               
+                                
+                                
+                                ThreadClass tt = new ThreadClass(s, this);
+                               
+                                
+                                players.add(tt);
+                                if (players.size() == 2) {
+                                        sendReady();
+                                }
+                                new Thread(tt).start();
+                        }
+                }
+                catch(IOException ioe) {
+                        return;
+                }
+        }
+       
+        public void sendReady() {
+                for (ThreadClass player : players) {
+                        player.sendReadyMessage();
+                }
+        }
+       
+        public void removeThreadClass(ThreadClass tt) {
+                players.remove(tt);
+        }
+       
+        public void dealDamage(String damage, ThreadClass tt) {
+                for (ThreadClass player : players) {
+                        if (!player.equals(tt)) {
+                                player.attack(damage);
+                        }
+                }      
+        
+       
+}
+ 
+        public static void main(String [] args) {
+               
+                new ServerClass(2500);
+                System.out.println("Server Connected at Port. Launch Client Class twice to start game!");
+        }
+}
+ 
+ 
+
+ 
